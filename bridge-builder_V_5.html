@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌉 Bridge Builder - STEM Fun!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  :root {
+    --bg:#FFF9F0;--card:#FFF;--accent:#FF6B6B;--accent2:#6BCB77;--accent3:#4D96FF;
+    --text:#2D2D2D;--shadow:0 4px 16px rgba(0,0,0,0.12);--radius:16px;--sun:#FFD700;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  header{background:linear-gradient(135deg,#4D96FF 0%,#6BCB77 100%);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 12px rgba(0,0,0,0.15);}
+  header h1{font-family:'Fredoka One',cursive;font-size:1.8rem;color:white;text-shadow:2px 2px 0 rgba(0,0,0,0.2);}
+  .step-indicator{display:flex;gap:8px;}
+  .step-dot{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.3);border:3px solid white;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:white;font-size:.95rem;transition:all .3s;}
+  .step-dot.active{background:white;color:var(--accent3);}
+  .step-dot.done{background:var(--sun);border-color:var(--sun);color:#333;}
+  .screen{display:none;padding:16px;max-width:900px;margin:0 auto;}
+  .screen.active{display:block;}
+  .card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--accent3);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .materials-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .material-btn{border:4px solid transparent;border-radius:14px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;background:#f8f8f8;touch-action:manipulation;}
+  .material-btn:active{transform:scale(.95);}
+  .material-btn.selected{border-color:var(--accent);background:#FFF0F0;transform:scale(1.03);box-shadow:0 4px 16px rgba(255,107,107,.3);}
+  .material-icon{width:48px;height:48px;border-radius:8px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+  .material-btn .mat-name{font-family:'Fredoka One',cursive;font-size:1rem;margin-bottom:4px;}
+  .material-btn .mat-props{font-size:.72rem;color:#666;line-height:1.4;}
+  .mat-popsicle .material-icon{background:#FFF3C4;} .mat-wood .material-icon{background:#F5E6D3;} .mat-steel .material-icon{background:#E8EDF2;}
+  .mat-popsicle .mat-name{color:#B8860B;} .mat-wood .mat-name{color:#6B3A2A;} .mat-steel .mat-name{color:#4A5568;}
+  .strength-bar-wrap{margin-top:4px;} .strength-label{font-size:.68rem;color:#888;margin-bottom:2px;}
+  .strength-bar{height:6px;border-radius:3px;background:#eee;overflow:hidden;}
+  .strength-fill{height:100%;border-radius:3px;transition:width .5s;}
+  .grid-wrapper{position:relative;border-radius:var(--radius);overflow:hidden;touch-action:none;user-select:none;}
+  .scene-bg{width:100%;background:linear-gradient(180deg,#87CEEB 0%,#C5E8F5 55%,#5DBB63 55%,#4AAF55 70%,#3A9BD5 70%,#2E8AC0 100%);position:relative;border-radius:var(--radius);overflow:hidden;}
+  .scene-bg::before{content:'☀️';position:absolute;top:8px;right:16px;font-size:2rem;}
+  .scene-bg::after{content:'☁️';position:absolute;top:10px;left:24px;font-size:1.8rem;opacity:.8;}
+  #bridge-canvas,#test-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+  .grid-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:grid;cursor:crosshair;}
+  .grid-cell{border:1px solid rgba(255,255,255,.15);transition:background .1s;touch-action:none;}
+  .grid-cell:hover{background:rgba(255,255,255,.2);}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:10px 0;}
+  .btn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;padding:10px 20px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;touch-action:manipulation;display:flex;align-items:center;gap:6px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
+  .btn:active{transform:scale(.95);}
+  .btn-primary{background:var(--accent3);color:white;} .btn-danger{background:var(--accent);color:white;}
+  .btn-warn{background:#FF9F43;color:white;} .btn-success{background:var(--accent2);color:white;}
+  .btn-gray{background:#E2E8F0;color:#555;} .btn-holo{background:linear-gradient(135deg,#001a2e,#002a40);color:#00FFB3;border:1px solid #00FFB344;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .sentence-fill{background:linear-gradient(135deg,#E8F4FD,#F0F9FF);border-left:5px solid var(--accent3);border-radius:12px;padding:16px;margin-bottom:12px;}
+  .sentence-fill p{font-size:1rem;line-height:1.8;font-weight:600;}
+  .fill-blank{display:inline-block;min-width:100px;border-bottom:3px solid var(--accent3);background:white;border-radius:6px;padding:2px 8px;font-weight:700;color:var(--accent3);font-size:.95rem;vertical-align:middle;}
+  select.fill-blank{cursor:pointer;border:2px solid var(--accent3);outline:none;font-family:'Nunito',sans-serif;font-weight:700;}
+  input.fill-blank{border:none;border-bottom:3px solid var(--accent3);background:transparent;outline:none;font-family:'Nunito',sans-serif;font-weight:700;color:var(--accent3);width:80px;text-align:center;font-size:.95rem;}
+  .weight-display{text-align:center;padding:20px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:20px;color:white;margin-bottom:16px;}
+  .weight-number{font-family:'Fredoka One',cursive;font-size:3rem;line-height:1;text-shadow:2px 2px 0 rgba(0,0,0,.2);}
+  .weight-unit{font-size:1rem;opacity:.8;}
+  .weight-bar-wrap{background:rgba(255,255,255,.2);border-radius:20px;height:16px;margin-top:12px;overflow:hidden;}
+  .weight-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#56CCF2,#2F80ED);transition:width .5s;position:relative;overflow:hidden;}
+  .weight-bar-fill::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:shimmer 1.5s infinite;}
+  @keyframes shimmer{to{left:200%;}}
+  .result-badge{display:inline-block;padding:8px 20px;border-radius:30px;font-family:'Fredoka One',cursive;font-size:1.1rem;margin-top:10px;}
+  .badge-held{background:var(--accent2);color:white;} .badge-bent{background:#FF9F43;color:white;} .badge-broke{background:var(--accent);color:white;}
+  .chart-area{background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .bar-chart{display:flex;align-items:flex-end;justify-content:space-around;height:200px;gap:16px;padding:0 10px;border-bottom:3px solid #E2E8F0;border-left:3px solid #E2E8F0;position:relative;}
+  .chart-y-labels{position:absolute;left:-40px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-size:.65rem;color:#888;}
+  .bar-group{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end;gap:6px;}
+  .bar-fill{width:100%;max-width:70px;border-radius:8px 8px 0 0;transition:height 1s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:flex-start;justify-content:center;padding-top:6px;min-height:4px;}
+  .bar-label-top{font-family:'Fredoka One',cursive;font-size:.75rem;color:white;}
+  .bar-label{font-size:.75rem;font-weight:700;color:#555;text-align:center;max-width:70px;line-height:1.3;}
+  .bar-col1{background:linear-gradient(180deg,#FF6B6B,#FF8E8E);} .bar-col2{background:linear-gradient(180deg,#4D96FF,#6BAAFF);} .bar-col3{background:linear-gradient(180deg,#6BCB77,#85D98F);}
+  .compare-sentence{background:linear-gradient(135deg,#FFF8E7,#FFF3CD);border-left:5px solid var(--sun);border-radius:12px;padding:14px;margin-bottom:10px;}
+  .compare-sentence p{font-size:.95rem;line-height:1.9;font-weight:600;}
+  .starter-card{background:linear-gradient(135deg,#E8F4FD,#EAF7EC);border-radius:14px;padding:14px;margin-bottom:10px;}
+  .starter-label{font-family:'Fredoka One',cursive;color:var(--accent3);margin-bottom:8px;font-size:.9rem;}
+  .starter-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:.9rem;font-weight:600;}
+  .starter-tag{background:var(--accent3);color:white;border-radius:20px;padding:2px 10px;font-size:.8rem;white-space:nowrap;font-family:'Fredoka One',cursive;}
+  .starter-text{color:#444;padding-top:1px;}
+  .stars-row{display:flex;gap:6px;justify-content:center;margin:8px 0;}
+  .star{font-size:1.6rem;animation:pop .3s;}
+  @keyframes pop{0%{transform:scale(0);}60%{transform:scale(1.3);}100%{transform:scale(1);}}
+  #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:white;padding:12px 24px;border-radius:30px;font-weight:700;z-index:1000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);font-family:'Nunito',sans-serif;font-size:.95rem;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .water-wave{position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(180deg,#3A9BD5 0%,#2E8AC0 100%);overflow:hidden;}
+  .water-wave::before{content:'';position:absolute;top:-6px;left:-10px;right:-10px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12'%3E%3Cpath d='M0 6 Q25 0 50 6 Q75 12 100 6 Q125 0 150 6 Q175 12 200 6 L200 12 L0 12Z' fill='%2387CEEB'/%3E%3C/svg%3E") repeat-x;background-size:200px 12px;animation:wave 2s linear infinite;}
+  @keyframes wave{to{background-position:200px 0;}}
+  .saved-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .saved-chip{padding:6px 14px;border-radius:20px;font-size:.8rem;font-weight:700;color:white;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  @media(max-height:700px){.screen{padding-bottom:80px;}}
+  .highlight-box{background:#FFF3CD;border-radius:10px;padding:10px 14px;font-size:.88rem;font-weight:600;color:#5D4037;margin-bottom:10px;}
+  .highlight-box strong{color:var(--accent);}
+  .qty-mode-tabs{display:flex;gap:6px;margin-bottom:12px;}
+  .qty-tab{flex:1;padding:8px 6px;border:2px solid #ddd;border-radius:10px;background:white;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;color:#888;text-align:center;transition:all .2s;touch-action:manipulation;}
+  .qty-tab.active{border-color:var(--accent3);background:#EEF4FF;color:var(--accent3);}
+  .qty-tab .tab-icon{font-size:1.1rem;display:block;margin-bottom:2px;}
+  .qty-control{display:flex;align-items:center;gap:8px;border-radius:10px;padding:9px 12px;margin-top:6px;transition:background .2s;}
+  .qty-control.mode-limit{background:#f0f4ff;} .qty-control.mode-stock{background:#f0fff4;}
+  .qty-label{font-size:.82rem;font-weight:700;color:#444;flex:1;}
+  .qty-label .mat-emoji{font-size:1.1rem;margin-right:4px;}
+  .qty-btn{width:30px;height:30px;border:none;border-radius:8px;background:var(--accent3);color:white;font-size:1.1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;flex-shrink:0;}
+  .qty-btn:active{transform:scale(.9);} .qty-btn.red{background:var(--accent);} .qty-btn:disabled{background:#ccc;cursor:not-allowed;}
+  .qty-value{font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--accent3);min-width:34px;text-align:center;}
+  .qty-value.infinite{color:#aaa;} .qty-value.low{color:var(--accent);} .qty-value.ok{color:#27ae60;}
+  .qty-bar-wrap{flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;min-width:40px;}
+  .qty-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#6BCB77,#4D96FF);transition:width .4s;}
+  .qty-bar-fill.low{background:linear-gradient(90deg,#FF9F43,#FF6B6B);}
+  .qty-info{font-size:.7rem;color:#888;text-align:center;margin-top:4px;font-weight:600;}
+  .qty-stock-input{width:48px;height:30px;border:2px solid var(--accent3);border-radius:8px;text-align:center;font-family:'Fredoka One',cursive;font-size:1rem;color:var(--accent3);outline:none;background:white;}
+  .qty-stock-input:focus{border-color:#FF6B6B;}
+  .qty-remaining{font-size:.75rem;color:#888;margin-left:2px;white-space:nowrap;}
+  .eng-panel{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:14px;padding:14px 16px;margin-bottom:14px;color:white;}
+  .eng-panel-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:#56CCF2;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .eng-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .eng-stat{background:rgba(255,255,255,.07);border-radius:8px;padding:8px 10px;}
+  .eng-stat-label{font-size:.65rem;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+  .eng-stat-value{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#56CCF2;}
+  .eng-status{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .eng-badge{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;}
+  .eng-badge.ok{background:#27ae60;color:white;} .eng-badge.warn{background:#e67e22;color:white;}
+  .eng-badge.bad{background:#e74c3c;color:white;} .eng-badge.info{background:rgba(86,204,242,.2);color:#56CCF2;border:1px solid #56CCF2;}
+  .load-diagram{background:rgba(255,255,255,.05);border-radius:8px;padding:8px;margin-top:8px;text-align:center;}
+  .load-diagram svg{width:100%;height:60px;}
+  .load-diagram-label{font-size:.65rem;color:#888;margin-top:4px;}
+
+  /* ===== HOLOGRAM ===== */
+  #holo-overlay{touch-action:none;}
+  #holo-canvas{display:block;}
+  @keyframes holoFlicker{0%,89%,91%,95%,97%,100%{opacity:1;}90%{opacity:.82;}96%{opacity:.88;}}
+  #holo-canvas{animation:holoFlicker 5s infinite;}
+  .holo-btn{position:absolute;background:rgba(0,255,170,.12);border:1px solid #00FFB366;color:#00FFB3;border-radius:24px;padding:8px 18px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .holo-btn:hover{background:rgba(0,255,170,.25);}
+  .holo-info-bar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);text-align:center;color:#00FFB3;font-family:'Fredoka One',cursive;font-size:.85rem;background:rgba(0,0,0,.75);padding:10px 22px;border-radius:20px;border:1px solid #00FFB333;white-space:nowrap;pointer-events:none;}
+  #pyramid-guide{position:absolute;top:58px;left:14px;background:rgba(0,5,15,.95);border:1px solid #00FFB344;border-radius:14px;padding:16px;color:#ccc;font-family:'Nunito',sans-serif;font-size:.82rem;max-width:230px;line-height:1.75;display:none;}
+  #pyramid-guide .g-title{color:#00FFB3;font-family:'Fredoka One',cursive;font-size:1rem;margin-bottom:10px;}
+  #pyramid-guide .g-step{margin-bottom:4px;}
+  #pyramid-guide .g-note{margin-top:10px;color:#00FFB3;font-size:.75rem;}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="toast" class="toast"></div>
+
+<!-- ========== HOLOGRAM OVERLAY ========== -->
+<div id="holo-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:2000;overflow:hidden;">
+  <canvas id="holo-canvas" style="width:100%;height:100%;"></canvas>
+  <button class="holo-btn" style="top:14px;right:14px;" onclick="closeHologram()">✕ ปิด</button>
+  <button class="holo-btn" style="top:14px;left:14px;" onclick="togglePyramidGuide()">📐 วิธีทำพีระมิด</button>
+  <div id="pyramid-guide">
+    <div class="g-title">🔺 วิธีทำพีระมิดใส</div>
+    <div class="g-step">1. ตัดแผ่นใส (แผ่น CD case / แผ่นรายงาน) <strong style="color:#fff;">4 ชิ้น</strong></div>
+    <div class="g-step">2. แต่ละชิ้น: บน <strong style="color:#fff;">1 cm</strong> · ล่าง <strong style="color:#fff;">6 cm</strong> · สูง <strong style="color:#fff;">3.5 cm</strong></div>
+    <div class="g-step">3. ติดเทปใส/กาวร้อนเป็นพีระมิด 4 หน้า</div>
+    <div class="g-step">4. วางพีระมิด <strong style="color:#fff;">คว่ำยอดลง</strong> บนจอตรงกลาง</div>
+    <div class="g-step">5. <strong style="color:#fff;">มองจากด้านบน</strong> ผ่านพีระมิด ✨</div>
+    <div class="g-note">⚡ ทำในห้องมืดจะเห็นชัดขึ้นมาก!</div>
+  </div>
+  <div class="holo-info-bar">📐 วางพีระมิดใสกลางจอ &nbsp;·&nbsp; มองจากด้านบน &nbsp;·&nbsp; ปิดไฟห้อง</div>
+</div>
+
+<header>
+  <h1>🌉 Bridge Builder</h1>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-dot" id="dot2">2</div>
+    <div class="step-dot" id="dot3">3</div>
+    <div class="step-dot" id="dot4">4</div>
+  </div>
+</header>
+
+<!-- ========== SCREEN 1 ========== -->
+<div class="screen active" id="screen1">
+  <div class="card">
+    <div class="card-title">🎯 Step 1: Plan Your Bridge!</div>
+    <div class="sentence-fill">
+      <p>I will use
+        <select class="fill-blank" id="plan-material">
+          <option value="">-- choose --</option>
+          <option>Popsicle Stick</option><option>Wood</option><option>Steel</option>
+        </select>
+        because it is
+        <select class="fill-blank" id="plan-reason">
+          <option value="">-- choose --</option>
+          <option>light and flexible</option><option>medium and sturdy</option>
+          <option>heavy and strong</option><option>rigid and strong</option>
+        </select>.
+      </p>
+      <p style="margin-top:8px;">I predict my bridge can hold
+        <input class="fill-blank" type="number" id="plan-predict" placeholder="???" min="0" max="2000" style="width:70px">
+        grams! 💪
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧱 Choose Your Material</div>
+    <div class="materials-row">
+      <button class="material-btn mat-popsicle" onclick="selectMaterial('popsicle')" id="btn-popsicle">
+        <div class="material-icon">🍡</div><div class="mat-name">Popsicle Stick</div>
+        <div class="mat-props">light • flexible • weak</div>
+        <div class="strength-bar-wrap"><div class="strength-label">Strength</div>
+          <div class="strength-bar"><div class="strength-fill" style="width:30%;background:#F4C430"></div></div></div>
+      </button>
+      <button class="material-btn mat-wood" onclick="selectMaterial('wood')" id="btn-wood">
+        <div class="material-icon">🪵</div><div class="mat-name">Wood</div>
+        <div class="mat-props">medium • sturdy • ok</div>
+        <div class="strength-bar-wrap"><div class="strength-label">Strength</div>
+          <div class="strength-bar"><div class="strength-fill" style="width:60%;background:#8B5E3C"></div></div></div>
+      </button>
+      <button class="material-btn mat-steel" onclick="selectMaterial('steel')" id="btn-steel">
+        <div class="material-icon">⚙️</div><div class="mat-name">Steel</div>
+        <div class="mat-props">heavy • rigid • strong</div>
+        <div class="strength-bar-wrap"><div class="strength-label">Strength</div>
+          <div class="strength-bar"><div class="strength-fill" style="width:90%;background:#7A8B99"></div></div></div>
+      </button>
+    </div>
+    <div class="highlight-box">👆 <strong>Tap material</strong> then tap the grid below to place blocks!</div>
+
+    <div class="card" style="margin-bottom:12px;padding:14px;">
+      <div class="card-title" style="font-size:1rem;">🔢 ชิ้นส่วนวัสดุ</div>
+      <div class="qty-mode-tabs">
+        <button class="qty-tab active" id="tab-limit" onclick="setQtyMode('limit')"><span class="tab-icon">🚧</span>Block Limit<br><span style="font-weight:400;font-size:.7rem;">วางได้สูงสุด</span></button>
+        <button class="qty-tab" id="tab-stock" onclick="setQtyMode('stock')"><span class="tab-icon">📦</span>Stock จริง<br><span style="font-weight:400;font-size:.7rem;">ของในมือนักเรียน</span></button>
+        <button class="qty-tab" id="tab-free" onclick="setQtyMode('free')"><span class="tab-icon">♾️</span>ไม่จำกัด<br><span style="font-weight:400;font-size:.7rem;">Free build</span></button>
+      </div>
+      <div id="panel-limit">
+        <div class="qty-control mode-limit"><span class="qty-label"><span class="mat-emoji">🍡</span>Popsicle</span>
+          <button class="qty-btn red" onclick="changeLimit('popsicle',-5)">−</button>
+          <span class="qty-value" id="lim-popsicle">∞</span>
+          <button class="qty-btn" onclick="changeLimit('popsicle',5)">+</button>
+          <div class="qty-bar-wrap"><div class="qty-bar-fill" id="bar-popsicle" style="width:0%"></div></div>
+          <span class="qty-remaining" id="rem-popsicle"></span></div>
+        <div class="qty-control mode-limit"><span class="qty-label"><span class="mat-emoji">🪵</span>Wood</span>
+          <button class="qty-btn red" onclick="changeLimit('wood',-5)">−</button>
+          <span class="qty-value" id="lim-wood">∞</span>
+          <button class="qty-btn" onclick="changeLimit('wood',5)">+</button>
+          <div class="qty-bar-wrap"><div class="qty-bar-fill" id="bar-wood" style="width:0%"></div></div>
+          <span class="qty-remaining" id="rem-wood"></span></div>
+        <div class="qty-control mode-limit"><span class="qty-label"><span class="mat-emoji">⚙️</span>Steel</span>
+          <button class="qty-btn red" onclick="changeLimit('steel',-5)">−</button>
+          <span class="qty-value" id="lim-steel">∞</span>
+          <button class="qty-btn" onclick="changeLimit('steel',5)">+</button>
+          <div class="qty-bar-wrap"><div class="qty-bar-fill" id="bar-steel" style="width:0%"></div></div>
+          <span class="qty-remaining" id="rem-steel"></span></div>
+        <div class="qty-info">กด − จนถึง ∞ = ไม่จำกัด</div>
+      </div>
+      <div id="panel-stock" style="display:none;">
+        <div class="qty-control mode-stock"><span class="qty-label"><span class="mat-emoji">🍡</span>Popsicle</span>
+          <span style="font-size:.75rem;color:#888;">มีทั้งหมด</span>
+          <input type="number" class="qty-stock-input" id="stock-popsicle" min="0" max="200" value="50" oninput="onStockInput()" onchange="onStockInput()">
+          <span style="font-size:.75rem;color:#888;">→ เหลือ</span><span class="qty-value ok" id="left-popsicle">50</span></div>
+        <div class="qty-control mode-stock"><span class="qty-label"><span class="mat-emoji">🪵</span>Wood</span>
+          <span style="font-size:.75rem;color:#888;">มีทั้งหมด</span>
+          <input type="number" class="qty-stock-input" id="stock-wood" min="0" max="200" value="30" oninput="onStockInput()" onchange="onStockInput()">
+          <span style="font-size:.75rem;color:#888;">→ เหลือ</span><span class="qty-value ok" id="left-wood">30</span></div>
+        <div class="qty-control mode-stock"><span class="qty-label"><span class="mat-emoji">⚙️</span>Steel</span>
+          <span style="font-size:.75rem;color:#888;">มีทั้งหมด</span>
+          <input type="number" class="qty-stock-input" id="stock-steel" min="0" max="200" value="0" oninput="onStockInput()" onchange="onStockInput()">
+          <span style="font-size:.75rem;color:#888;">→ เหลือ</span><span class="qty-value ok" id="left-steel">0</span></div>
+      </div>
+      <div id="panel-free" style="display:none;text-align:center;padding:16px 0 8px;">
+        <div style="font-size:2rem;">♾️</div>
+        <div style="font-weight:700;color:#aaa;font-size:.9rem;">ไม่จำกัดจำนวนชิ้นส่วน</div>
+      </div>
+      <div style="text-align:center;font-size:.8rem;color:#888;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;">
+        วางแล้ว: <strong id="block-count-detail">🍡 0 | 🪵 0 | ⚙️ 0</strong>
+      </div>
+    </div>
+
+    <div class="grid-wrapper">
+      <div class="scene-bg" id="scene-bg" style="height:260px;">
+        <div style="position:absolute;left:0;top:55%;width:14%;height:30%;background:#5DBB63;border-right:4px solid #3A7D44;z-index:5;border-radius:0 0 0 8px;"></div>
+        <div style="position:absolute;right:0;top:55%;width:14%;height:30%;background:#5DBB63;border-left:4px solid #3A7D44;z-index:5;border-radius:0 0 8px 0;"></div>
+        <div class="water-wave"><div style="position:absolute;top:8px;left:16px;font-size:1.2rem;">🐟</div><div style="position:absolute;top:16px;right:24px;font-size:1rem;">🌊</div></div>
+        <canvas id="bridge-canvas"></canvas>
+        <div class="grid-overlay" id="grid-overlay"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-gray" onclick="undoBlock()">↩️ Undo</button>
+      <button class="btn btn-danger" onclick="clearGrid()">🗑️ Clear</button>
+      <button class="btn btn-success" onclick="goToTest()">🧪 Test It!</button>
+    </div>
+    <div style="text-align:center;font-size:.8rem;color:#888;margin-top:4px;">Blocks placed: <strong id="block-count">0</strong></div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 2 ========== -->
+<div class="screen" id="screen2">
+  <div class="card">
+    <div class="card-title">⚖️ Step 2: Test Your Bridge!</div>
+    <div class="weight-display">
+      <div class="weight-unit">Current weight</div>
+      <div class="weight-number" id="weight-display">0 <span style="font-size:1.2rem">g</span></div>
+      <div class="weight-bar-wrap"><div class="weight-bar-fill" id="weight-bar" style="width:0%"></div></div>
+      <div id="result-badge-wrap" style="margin-top:10px;"></div>
+    </div>
+    <div class="eng-panel">
+      <div class="eng-panel-title">🔬 Engineering Analysis</div>
+      <div class="eng-grid">
+        <div class="eng-stat"><div class="eng-stat-label">📐 Structure Type</div><div class="eng-stat-value" id="eng-type">—</div></div>
+        <div class="eng-stat"><div class="eng-stat-label">💪 Max Load (Est.)</div><div class="eng-stat-value" id="eng-maxload">—</div></div>
+        <div class="eng-stat"><div class="eng-stat-label">⚡ Reaction Force</div><div class="eng-stat-value" id="eng-reaction">—</div></div>
+        <div class="eng-stat"><div class="eng-stat-label">🔩 Bending Moment</div><div class="eng-stat-value" id="eng-moment">—</div></div>
+      </div>
+      <div class="eng-status" id="eng-status-badges"></div>
+      <div class="load-diagram">
+        <svg viewBox="0 0 300 60" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="20" width="280" height="8" rx="3" fill="#56CCF2" opacity=".7"/>
+          <polygon points="20,28 10,50 30,50" fill="#FFD700"/><polygon points="280,28 270,50 290,50" fill="#FFD700"/>
+          <line x1="150" y1="55" x2="150" y2="32" stroke="#FF6B6B" stroke-width="3" marker-end="url(#arr)"/>
+          <text x="155" y="58" fill="#FF6B6B" font-size="9" font-family="Arial">P</text>
+          <line x1="20" y1="50" x2="20" y2="32" stroke="#6BCB77" stroke-width="2.5" marker-end="url(#arrG)"/>
+          <line x1="280" y1="50" x2="280" y2="32" stroke="#6BCB77" stroke-width="2.5" marker-end="url(#arrG)"/>
+          <text x="2" y="58" fill="#6BCB77" font-size="8" font-family="Arial">R</text>
+          <text x="270" y="58" fill="#6BCB77" font-size="8" font-family="Arial">R</text>
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 L2,4Z" fill="#FF6B6B"/></marker>
+            <marker id="arrG" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 L2,4Z" fill="#6BCB77"/></marker>
+          </defs>
+        </svg>
+        <div class="load-diagram-label">Simply Supported Beam — Center Point Load</div>
+      </div>
+    </div>
+    <div style="border-radius:16px;overflow:hidden;margin-bottom:14px;">
+      <div class="scene-bg" id="test-scene" style="height:240px;">
+        <div style="position:absolute;left:0;top:55%;width:14%;height:30%;background:#5DBB63;border-right:4px solid #3A7D44;z-index:5;border-radius:0 0 0 8px;"></div>
+        <div style="position:absolute;right:0;top:55%;width:14%;height:30%;background:#5DBB63;border-left:4px solid #3A7D44;z-index:5;border-radius:0 0 8px 0;"></div>
+        <div class="water-wave"></div>
+        <canvas id="test-canvas"></canvas>
+        <div id="weight-emoji" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:2rem;transition:all .5s;opacity:0;">📦</div>
+      </div>
+    </div>
+    <div class="toolbar" id="test-toolbar">
+      <button class="btn btn-primary" onclick="startTest()" id="btn-start-test">▶️ Start Test</button>
+      <button class="btn btn-gray" onclick="goBack()" id="btn-go-back">🔙 Rebuild</button>
+    </div>
+    <div class="sentence-fill" id="test-sentence" style="display:none;">
+      <p>My bridge
+        <select class="fill-blank" id="test-result-word">
+          <option value="">-- choose --</option><option>broke</option><option>bent</option><option>held the weight</option>
+        </select>
+        when I added <strong id="break-weight-display">?</strong> grams.
+      </p>
+      <p style="margin-top:6px;">Max weight: <strong id="max-weight-display" style="color:var(--accent3);font-size:1.1rem">?</strong> grams 🏆</p>
+    </div>
+    <div class="toolbar" id="save-toolbar" style="display:none;">
+      <button class="btn btn-success" onclick="saveResult()">💾 Save Result</button>
+      <button class="btn btn-primary" onclick="goToCompare()">📊 Compare!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 3 ========== -->
+<div class="screen" id="screen3">
+  <div class="card">
+    <div class="card-title">📊 Step 3: Compare Results!</div>
+    <div id="saved-chips-wrap" class="saved-chips"></div>
+    <div class="chart-area">
+      <div style="font-weight:800;color:#555;margin-bottom:10px;font-size:.9rem;">Max Weight Held (grams)</div>
+      <div style="position:relative;padding-left:44px;">
+        <div class="bar-chart" id="bar-chart">
+          <div class="chart-y-labels" id="y-labels"></div>
+          <div class="bar-group" id="bar1-group" style="display:none"><div class="bar-fill bar-col1" id="bar1" style="height:0px"><span class="bar-label-top" id="bar1-top">0</span></div><div class="bar-label" id="bar1-label">Try 1</div></div>
+          <div class="bar-group" id="bar2-group" style="display:none"><div class="bar-fill bar-col2" id="bar2" style="height:0px"><span class="bar-label-top" id="bar2-top">0</span></div><div class="bar-label" id="bar2-label">Try 2</div></div>
+          <div class="bar-group" id="bar3-group" style="display:none"><div class="bar-fill bar-col3" id="bar3" style="height:0px"><span class="bar-label-top" id="bar3-top">0</span></div><div class="bar-label" id="bar3-label">Try 3</div></div>
+          <div id="chart-empty" style="color:#ccc;font-size:.9rem;width:100%;text-align:center;padding:60px 0;">No results yet! 🌉</div>
+        </div>
+      </div>
+    </div>
+    <div class="compare-sentence" id="compare-sentences" style="display:none;">
+      <p>🔍 <select class="fill-blank" id="cmp-strong"><option value="">-- Try ? --</option></select> is stronger than <select class="fill-blank" id="cmp-weak"><option value="">-- Try ? --</option></select>.</p>
+      <p style="margin-top:8px;">The best material is
+        <select class="fill-blank" id="cmp-best"><option value="">-- choose --</option><option>Popsicle Stick</option><option>Wood</option><option>Steel</option><option>a mix of materials</option></select>
+        because <input class="fill-blank" type="text" id="cmp-because" placeholder="it is ..." style="width:130px">.
+      </p>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-gray" onclick="goToScreen1()">🔙 Build Again</button>
+      <button class="btn btn-primary" onclick="goToPresent()">🎤 Present!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 4 ========== -->
+<div class="screen" id="screen4">
+  <div class="card">
+    <div class="card-title">🎤 Step 4: Tell Your Class!</div>
+    <div class="highlight-box">🌟 Use these <strong>Sentence Starters</strong> to present your work!</div>
+    <div class="starter-card">
+      <div class="starter-label">📝 Sentence Starters:</div>
+      <div class="starter-item"><span class="starter-tag">We built...</span><span class="starter-text">a bridge using <span id="p-material">?</span></span></div>
+      <div class="starter-item"><span class="starter-tag">We used...</span><span class="starter-text" id="present-used">? blocks</span></div>
+      <div class="starter-item"><span class="starter-tag">Our bridge can hold...</span><span class="starter-text" id="present-hold">? grams</span></div>
+      <div class="starter-item"><span class="starter-tag">We predicted...</span><span class="starter-text" id="present-predict">? grams, result was ? grams</span></div>
+    </div>
+    <div class="starter-card">
+      <div class="starter-label">💡 What did you learn?</div>
+      <div class="starter-item">
+        <span class="starter-tag" style="background:#FF9F43">Next time...</span>
+        <textarea class="fill-blank" id="present-nexttime" rows="2" style="width:100%;max-width:none;padding:6px 10px;border-radius:8px;resize:none;font-family:'Nunito',sans-serif;font-size:.88rem;" placeholder="use more steel blocks because..."></textarea>
+      </div>
+    </div>
+    <div style="text-align:center;padding:10px 0;">
+      <div class="stars-row"><span class="star">⭐</span><span class="star" style="animation-delay:.1s">⭐</span><span class="star" style="animation-delay:.2s">⭐</span></div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--accent3);">Great job, Engineer! 🏆</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-warn" onclick="goToScreen1()">🔄 Start Over</button>
+      <button class="btn btn-success" onclick="celebrate()">🎉 Celebrate!</button>
+      <button class="btn btn-holo" onclick="showHologram()">🔺 Hologram!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let selectedMaterial = 'popsicle';
+let grid = [], history = [];
+const COLS = 14, ROWS = 6;
+let cellW, cellH, isDrawing = false;
+let testRunning = false, currentWeight = 0, maxWeight = 0;
+let bridgeStatus = 'ok', testInterval = null;
+let savedResults = [], blockCount = 0;
+const materialColors = {
+  popsicle:{fill:'#F4C430',stroke:'#D4A017'},
+  wood:{fill:'#8B5E3C',stroke:'#5A3520'},
+  steel:{fill:'#9AABB9',stroke:'#5D6E7A'}
+};
+let materialLimits   = {popsicle:null,wood:null,steel:null};
+let limitModeValues  = {popsicle:null,wood:null,steel:null};
+let qtyMode = 'limit';
+const QTY_STEP=5, QTY_MIN=5;
+// Bank boundaries
+const BANK_L=2, BANK_R=COLS-2; // span = col 2..11
+
+// ============================================================
+// QUANTITY MODE
+// ============================================================
+function setQtyMode(mode){
+  if(qtyMode==='limit') limitModeValues={...materialLimits};
+  qtyMode=mode;
+  ['limit','stock','free'].forEach(m=>{
+    document.getElementById('tab-'+m).classList.toggle('active',m===mode);
+    document.getElementById('panel-'+m).style.display=m===mode?'block':'none';
+  });
+  if(mode==='free') materialLimits={popsicle:null,wood:null,steel:null};
+  else if(mode==='limit') materialLimits={...limitModeValues};
+  updateQtyDisplay();
+}
+function changeLimit(mat,delta){
+  const cur=materialLimits[mat];
+  materialLimits[mat]=delta>0?(cur===null?QTY_MIN:Math.min(cur+QTY_STEP,84)):((cur===null||cur<=QTY_MIN)?null:cur-QTY_STEP);
+  limitModeValues[mat]=materialLimits[mat];
+  updateQtyDisplay();
+}
+function updateStockDisplay(){
+  for(const mat of['popsicle','wood','steel']){
+    const inp=document.getElementById('stock-'+mat); if(!inp) continue;
+    const total=parseInt(inp.value)||0, used=countMatBlocks(mat), left=Math.max(0,total-used);
+    const el=document.getElementById('left-'+mat);
+    if(el){el.textContent=left;el.className='qty-value '+(left<5?'low':'ok');}
+    materialLimits[mat]=total;
+  }
+}
+function onStockInput(){ updateStockDisplay(); updateQtyDisplay(); }
+function updateQtyDisplay(){
+  if(qtyMode==='stock') updateStockDisplay();
+  if(qtyMode==='limit'){
+    for(const mat of['popsicle','wood','steel']){
+      const lim=materialLimits[mat], used=countMatBlocks(mat);
+      const limEl=document.getElementById('lim-'+mat);
+      if(limEl){limEl.textContent=lim===null?'∞':lim;limEl.className='qty-value'+(lim===null?' infinite':used>=lim?' low':'');}
+      const barEl=document.getElementById('bar-'+mat);
+      if(barEl){if(lim!==null){const pct=Math.min(100,Math.round(used/lim*100));barEl.style.width=pct+'%';barEl.className='qty-bar-fill'+(pct>=90?' low':'');}else{barEl.style.width='0%';barEl.className='qty-bar-fill';}}
+      const remEl=document.getElementById('rem-'+mat);
+      if(remEl) remEl.textContent=lim===null?'':`${used}/${lim}`;
+    }
+  }
+  const det=document.getElementById('block-count-detail');
+  if(det) det.textContent=`🍡 ${countMatBlocks('popsicle')} | 🪵 ${countMatBlocks('wood')} | ⚙️ ${countMatBlocks('steel')}`;
+  document.getElementById('block-count').textContent=countBlocks();
+}
+function countMatBlocks(mat){let n=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]===mat)n++;return n;}
+function countBlocks(){let n=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])n++;return n;}
+
+// ============================================================
+// GRID
+// ============================================================
+function initGrid(){
+  grid=[];for(let r=0;r<ROWS;r++){grid[r]=[];for(let c=0;c<COLS;c++)grid[r][c]=null;}
+  blockCount=0;document.getElementById('block-count').textContent='0';
+}
+function setupCanvas(){
+  const scene=document.getElementById('scene-bg'),canvas=document.getElementById('bridge-canvas'),overlay=document.getElementById('grid-overlay');
+  const rect=scene.getBoundingClientRect(),W=rect.width||600,H=rect.height||260;
+  canvas.width=W;canvas.height=H;cellW=W/COLS;cellH=(H*.55)/ROWS;
+  overlay.style.gridTemplateColumns=`repeat(${COLS},1fr)`;
+  overlay.style.gridTemplateRows=`repeat(${ROWS},${cellH}px)`;
+  overlay.style.height=`${ROWS*cellH}px`;overlay.innerHTML='';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const cell=document.createElement('div');cell.className='grid-cell';cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('pointerdown',onCellDown);cell.addEventListener('pointerenter',onCellEnter);
+    overlay.appendChild(cell);
+  }
+  drawGrid();
+}
+function selectMaterial(mat){
+  selectedMaterial=mat;
+  document.querySelectorAll('.material-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('btn-'+mat).classList.add('selected');
+  const names={popsicle:'Popsicle Stick',wood:'Wood',steel:'Steel'};
+  document.getElementById('plan-material').value=names[mat];
+}
+function drawGrid(brokenCells,bentCells){
+  const canvas=document.getElementById('bridge-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pad=2;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const mat=grid[r][c];if(!mat)continue;
+    const x=c*cellW,y=r*cellH,mc=materialColors[mat];ctx.save();
+    const broken=brokenCells&&brokenCells.has(`${r},${c}`),bent=bentCells&&bentCells.has(`${r},${c}`);
+    if(broken){ctx.globalAlpha=.35;ctx.translate(x+cellW/2,y+cellH/2);ctx.rotate(.4);ctx.translate(-cellW/2,-cellH/2);}
+    else if(bent){ctx.translate(x+cellW/2,y+cellH/2);ctx.transform(1,.2,0,1,-cellW/2,0);ctx.globalAlpha=.75;}
+    else ctx.translate(x,y);
+    if(mat==='wood'){const g=ctx.createLinearGradient(0,0,cellW,cellH);g.addColorStop(0,'#A0714F');g.addColorStop(1,'#6B4226');ctx.fillStyle=g;}
+    else if(mat==='steel'){const g=ctx.createLinearGradient(0,0,cellW,cellH);g.addColorStop(0,'#B0C4D0');g.addColorStop(1,'#7A8B99');ctx.fillStyle=g;}
+    else ctx.fillStyle='#F4C430';
+    ctx.beginPath();ctx.roundRect(pad,pad,cellW-pad*2,cellH-pad*2,4);ctx.fill();
+    ctx.strokeStyle=mc.stroke;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+  }
+}
+function onCellDown(e){e.preventDefault();isDrawing=true;placeBlock(e.target);}
+function onCellEnter(e){if(!isDrawing)return;placeBlock(e.target);}
+document.addEventListener('pointerup',()=>{isDrawing=false;});
+function placeBlock(cell){
+  const r=parseInt(cell.dataset.r),c=parseInt(cell.dataset.c);
+  if(isNaN(r)||isNaN(c)||grid[r][c]===selectedMaterial)return;
+  if(qtyMode!=='free'){const lim=materialLimits[selectedMaterial];if(lim!==null&&countMatBlocks(selectedMaterial)>=lim){showToast(`⛔ ${selectedMaterial} หมดแล้ว! (${lim})`);return;}}
+  history.push({r,c,prev:grid[r][c]});grid[r][c]=selectedMaterial;blockCount=countBlocks();updateQtyDisplay();drawGrid();
+}
+function undoBlock(){if(!history.length){showToast('Nothing to undo!');return;}const last=history.pop();grid[last.r][last.c]=last.prev;blockCount=countBlocks();updateQtyDisplay();drawGrid();}
+function clearGrid(){history=[];initGrid();drawGrid();updateQtyDisplay();showToast('Cleared! 🗑️');}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('active',i===n-1));
+  for(let i=1;i<=4;i++){const d=document.getElementById('dot'+i);if(i<n){d.className='step-dot done';d.textContent='✓';}else if(i===n){d.className='step-dot active';d.textContent=i;}else{d.className='step-dot';d.textContent=i;}}
+  window.scrollTo(0,0);
+}
+function goToTest(){
+  if(blockCount<3){showToast('Place at least 3 blocks! 🧱');return;}
+  showScreen(2);setupTestCanvas();
+  document.getElementById('test-sentence').style.display='none';document.getElementById('save-toolbar').style.display='none';
+  document.getElementById('test-toolbar').style.display='flex';document.getElementById('weight-display').textContent='0 g';
+  document.getElementById('weight-bar').style.width='0%';document.getElementById('result-badge-wrap').innerHTML='';
+  document.getElementById('weight-emoji').style.opacity='0';currentWeight=0;bridgeStatus='ok';
+  drawTestGrid();updateEngPanel();
+}
+function goBack(){if(testInterval){clearInterval(testInterval);testInterval=null;testRunning=false;}showScreen(1);}
+function goToCompare(){showScreen(3);updateChart();}
+function goToPresent(){showScreen(4);updatePresent();}
+function goToScreen1(){
+  if(testInterval){clearInterval(testInterval);testInterval=null;testRunning=false;}
+  showScreen(1);initGrid();drawGrid();updateQtyDisplay();
+  document.getElementById('test-sentence').style.display='none';document.getElementById('save-toolbar').style.display='none';
+}
+
+// ============================================================
+// TEST CANVAS
+// ============================================================
+function setupTestCanvas(){const scene=document.getElementById('test-scene'),canvas=document.getElementById('test-canvas'),rect=scene.getBoundingClientRect();canvas.width=rect.width||600;canvas.height=rect.height||240;}
+function drawTestGrid(brokenCells,bentCells){
+  const canvas=document.getElementById('test-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const W=canvas.width,H=canvas.height,cW=W/COLS,cH=(H*.55)/ROWS,pad=2;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const mat=grid[r][c];if(!mat)continue;
+    const x=c*cW,y=r*cH,mc=materialColors[mat];ctx.save();
+    const broken=brokenCells&&brokenCells.has(`${r},${c}`),bent=bentCells&&bentCells.has(`${r},${c}`);
+    if(broken){ctx.globalAlpha=.3;ctx.translate(x+cW/2,y+cH/2);ctx.rotate(.5);ctx.translate(-cW/2,-cH/2);}
+    else if(bent){const p=(bentCells.size/countBlocks())||0;ctx.translate(x+cW/2,y+cH/2);ctx.transform(1,.15*p+.1,0,1,-cW/2,cH*.08*p);ctx.globalAlpha=.8;}
+    else ctx.translate(x,y);
+    if(mat==='wood'){const g=ctx.createLinearGradient(0,0,cW,cH);g.addColorStop(0,'#A0714F');g.addColorStop(1,'#6B4226');ctx.fillStyle=g;}
+    else if(mat==='steel'){const g=ctx.createLinearGradient(0,0,cW,cH);g.addColorStop(0,'#B0C4D0');g.addColorStop(1,'#7A8B99');ctx.fillStyle=g;}
+    else ctx.fillStyle='#F4C430';
+    ctx.beginPath();ctx.roundRect(pad,pad,cW-pad*2,cH-pad*2,3);ctx.fill();ctx.strokeStyle=mc.stroke;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+  }
+}
+
+// ============================================================
+// ENGINEERING PROPERTIES
+// ============================================================
+const materialProps={
+  popsicle:{MOR:40e6,E:3.5e9,b:.010,h:.004,L:.114},
+  wood:{MOR:15e6,E:3.0e9,b:.010,h:.006,L:.114},
+  steel:{MOR:250e6,E:200e9,b:.003,h:.003,L:.114}
+};
+
+// FIX 1: BFS Connectivity Check
+function isBridgeConnected(){
+  const visited=new Set(),queue=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<BANK_L;c++)if(grid[r][c]){visited.add(`${r},${c}`);queue.push([r,c]);}
+  while(queue.length){
+    const[r,c]=queue.shift();if(c>=BANK_R)return true;
+    for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){const nr=r+dr,nc=c+dc,key=`${nr},${nc}`;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]&&!visited.has(key)){visited.add(key);queue.push([nr,nc]);}}
+  }
+  return false;
+}
+
+// FIX 2+3: Weakest Cross-Section + Depth Factor
+function calcBridgeStrength(){
+  let total=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])total++;
+  if(total===0)return 0;
+  if(!isBridgeConnected())return 50;
+  const span_m=.60,spanLen=BANK_R-BANK_L;
+  let minColCap=Infinity,coveredCols=0;
+  for(let c=BANK_L;c<BANK_R;c++){
+    let colM=0;for(let r=0;r<ROWS;r++){const mat=grid[r][c];if(!mat)continue;const p=materialProps[mat];colM+=p.MOR*(p.b*p.h*p.h)/6;}
+    if(colM>0)coveredCols++;if(colM<minColCap)minColCap=colM;
+  }
+  if(!isFinite(minColCap)||minColCap===0)return 50;
+  const spanEff=coveredCols/spanLen;
+  const P_min=(4*minColCap)/span_m;
+  let topRow=ROWS,botRow=-1;
+  for(let r=0;r<ROWS;r++)for(let c=BANK_L;c<BANK_R;c++)if(grid[r][c]){if(r<topRow)topRow=r;if(r>botRow)botRow=r;}
+  const depthFactor=1.0+((botRow>=topRow?(botRow-topRow)/(ROWS-1):0))*0.8;
+  return Math.round(Math.max(50,Math.min(15000,P_min*spanEff*depthFactor*102)));
+}
+function getEngineeringAnalysis(){
+  let matCount={popsicle:0,wood:0,steel:0};
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const m=grid[r][c];if(m)matCount[m]++;}
+  const connected=isBridgeConnected(),strength=calcBridgeStrength(),span_m=.60,spanLen=BANK_R-BANK_L;
+  let coveredCols=0,weakestCol=Math.floor(COLS/2),minColCap=Infinity;
+  for(let c=BANK_L;c<BANK_R;c++){let colM=0;for(let r=0;r<ROWS;r++){const mat=grid[r][c];if(!mat)continue;const p=materialProps[mat];colM+=p.MOR*(p.b*p.h*p.h)/6;}if(colM>0)coveredCols++;if(colM<minColCap){minColCap=colM;weakestCol=c;}}
+  let topRow=ROWS,botRow=-1;for(let r=0;r<ROWS;r++)for(let c=BANK_L;c<BANK_R;c++)if(grid[r][c]){if(r<topRow)topRow=r;if(r>botRow)botRow=r;}
+  const depthRatio=(botRow>=topRow?(botRow-topRow)/(ROWS-1):0);
+  let mid=0,bot=0;for(let c=0;c<COLS;c++){if(grid[2][c]||grid[3][c])mid++;if(grid[4][c]||grid[5][c])bot++;}
+  const hasDiag=mid>2,hasBot=bot>2,dominant=Object.entries(matCount).sort((a,b)=>b[1]-a[1])[0];
+  let structureType=!connected?'Disconnected ❌':hasDiag?'Truss Bridge':hasBot?'Beam Bridge':'Flat Bridge';
+  return{strength,connected,matCount,spanCoverage:Math.round(coveredCols/spanLen*100),depthPct:Math.round(depthRatio*100),hasDiagonals:hasDiag,hasBottomChord:hasBot,dominant:dominant?dominant[0]:'none',bendingMoment_Nm:((strength/102)*span_m/4).toFixed(3),reactionForce_N:((strength/102)/2).toFixed(1),structureType};
+}
+function getWeakestCells(threshold){
+  const weak=new Set();let minColCap=Infinity,weakestCol=Math.floor(COLS/2);
+  for(let c=BANK_L;c<BANK_R;c++){let colM=0;for(let r=0;r<ROWS;r++){const mat=grid[r][c];if(!mat)continue;const p=materialProps[mat];colM+=p.MOR*(p.b*p.h*p.h)/6;}if(colM>0&&colM<minColCap){minColCap=colM;weakestCol=c;}}
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const mat=grid[r][c];if(!mat)continue;const p=materialProps[mat],Z=(p.b*p.h*p.h)/6,P_cap=(4*p.MOR*Z)/.60,dist=Math.abs(c-weakestCol)/(COLS/2),rowF=(ROWS-1-r)/ROWS,sf=(1-dist*.6)*(.3+rowF*.7),util=((threshold/102)*sf)/P_cap;if(util>.65)weak.add(`${r},${c}`);}
+  return weak;
+}
+function updateEngPanel(){
+  const ana=getEngineeringAnalysis();
+  document.getElementById('eng-type').textContent=ana.structureType;
+  document.getElementById('eng-maxload').textContent=ana.strength+' g';
+  document.getElementById('eng-reaction').textContent=ana.reactionForce_N+' N';
+  document.getElementById('eng-moment').textContent=ana.bendingMoment_Nm+' N·m';
+  const badges=document.getElementById('eng-status-badges');badges.innerHTML='';
+  const addBadge=(txt,type)=>{const b=document.createElement('span');b.className=`eng-badge ${type}`;b.textContent=txt;badges.appendChild(b);};
+  addBadge(ana.connected?'✓ Connected':'✗ Disconnected!',ana.connected?'ok':'bad');
+  addBadge(`Span: ${ana.spanCoverage}%`,ana.spanCoverage>=80?'ok':ana.spanCoverage>=50?'warn':'bad');
+  addBadge(`Depth: ${ana.depthPct}%`,ana.depthPct>=60?'ok':ana.depthPct>=30?'warn':'bad');
+  addBadge(ana.hasDiagonals?'✓ Web Members':'✗ No Diagonals',ana.hasDiagonals?'ok':'warn');
+  addBadge(ana.hasBottomChord?'✓ Bottom Chord':'✗ No Bottom Chord',ana.hasBottomChord?'ok':'warn');
+  for(const[mat,cnt]of Object.entries(ana.matCount))if(cnt>0)addBadge(`${mat}:${cnt}`,'info');
+}
+
+// ============================================================
+// TEST LOGIC
+// ============================================================
+function startTest(){
+  if(testRunning)return;
+  testRunning=true;currentWeight=0;maxWeight=0;bridgeStatus='ok';
+  document.getElementById('btn-start-test').disabled=true;document.getElementById('btn-go-back').disabled=true;
+  const maxStr=calcBridgeStrength(),emoji=document.getElementById('weight-emoji');
+  emoji.style.opacity='1';emoji.textContent='📦';
+  testInterval=setInterval(()=>{
+    currentWeight+=50;
+    const pct=Math.min((currentWeight/(maxStr*1.5))*100,100);
+    document.getElementById('weight-display').textContent=currentWeight+' g';
+    document.getElementById('weight-bar').style.width=pct+'%';
+    if(currentWeight>=maxStr*.6&&bridgeStatus==='ok'){bridgeStatus='bent';drawTestGrid(null,getWeakestCells(currentWeight));showToast('Bridge is bending! 😬');}
+    if(currentWeight>=maxStr){clearInterval(testInterval);testInterval=null;testRunning=false;bridgeStatus='broke';maxWeight=currentWeight-50;drawTestGrid(getWeakestCells(currentWeight),null);emoji.textContent='💥';showResult(maxWeight);return;}
+    maxWeight=currentWeight;emoji.style.top=(10+pct*.3)+'%';
+  },400);
+  setTimeout(()=>{if(!testRunning)return;clearInterval(testInterval);testInterval=null;testRunning=false;maxWeight=currentWeight;bridgeStatus='held';emoji.textContent='🏆';showResult(maxWeight);},(maxStr*1.5/50)*400+100);
+}
+function showResult(w){
+  document.getElementById('btn-start-test').disabled=false;document.getElementById('btn-go-back').disabled=false;
+  const bw=document.getElementById('result-badge-wrap');let bClass,bText;
+  if(bridgeStatus==='held'){bClass='badge-held';bText='🏆 Bridge Held!';}
+  else if(bridgeStatus==='bent'){bClass='badge-bent';bText='😬 Bridge Bent!';}
+  else{bClass='badge-broke';bText='💥 Bridge Broke!';}
+  bw.innerHTML=`<span class="result-badge ${bClass}">${bText}</span>`;
+  document.getElementById('test-sentence').style.display='block';
+  document.getElementById('break-weight-display').textContent=currentWeight;
+  document.getElementById('max-weight-display').textContent=w;
+  document.getElementById('save-toolbar').style.display='flex';
+  if(bridgeStatus==='held')triggerConfetti();
+}
+function saveResult(){
+  if(savedResults.length>=3){showToast('Max 3 results!');return;}
+  const matName={popsicle:'Popsicle Stick',wood:'Wood',steel:'Steel'};
+  let matCount={popsicle:0,wood:0,steel:0};
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])matCount[grid[r][c]]++;
+  const dominant=Object.entries(matCount).sort((a,b)=>b[1]-a[1])[0][0];
+  savedResults.push({weight:maxWeight,material:matName[dominant],blocks:blockCount});
+  showToast(`Saved! (${savedResults.length}/3) 💾`);updateCompareDropdowns();
+}
+
+// ============================================================
+// CHART
+// ============================================================
+function updateChart(){
+  const empty=document.getElementById('chart-empty'),chipWrap=document.getElementById('saved-chips-wrap');
+  const labels=['Try 1','Try 2','Try 3'],chipColors=['#FF6B6B','#4D96FF','#6BCB77'];
+  chipWrap.innerHTML='';
+  if(savedResults.length===0){empty.style.display='block';document.getElementById('compare-sentences').style.display='none';return;}
+  empty.style.display='none';
+  const maxW=Math.max(...savedResults.map(r=>r.weight),200),chartH=180;
+  savedResults.forEach((res,i)=>{
+    const group=document.getElementById(`bar${i+1}-group`),bar=document.getElementById(`bar${i+1}`),top=document.getElementById(`bar${i+1}-top`),lbl=document.getElementById(`bar${i+1}-label`);
+    group.style.display='flex';const h=Math.max(4,Math.round(res.weight/maxW*chartH));
+    setTimeout(()=>{bar.style.height=h+'px';},100);
+    top.textContent=res.weight+'g';
+    lbl.innerHTML=labels[i]+'<br>('+res.material.substring(0,5)+')'; // FIX 2: innerHTML for <br>
+    const chip=document.createElement('div');chip.className='saved-chip';chip.style.background=chipColors[i];chip.textContent=`${labels[i]}: ${res.weight}g – ${res.material}`;chipWrap.appendChild(chip);
+  });
+  const yL=document.getElementById('y-labels');yL.innerHTML='';
+  [0,1,2,3,4].forEach(i=>{const d=document.createElement('div');d.textContent=Math.round(maxW/4*(4-i))+'g';yL.appendChild(d);});
+  if(savedResults.length>=2){document.getElementById('compare-sentences').style.display='block';updateCompareDropdowns();}
+}
+function updateCompareDropdowns(){
+  const opts=savedResults.map((r,i)=>`<option value="Try ${i+1}">Try ${i+1} (${r.weight}g)</option>`).join('');
+  document.getElementById('cmp-strong').innerHTML=`<option value="">-- Try ? --</option>${opts}`;
+  document.getElementById('cmp-weak').innerHTML=`<option value="">-- Try ? --</option>${opts}`;
+}
+function updatePresent(){
+  const mat=document.getElementById('plan-material').value||'?',pred=document.getElementById('plan-predict').value||'?';
+  const best=savedResults.length>0?savedResults[savedResults.length-1]:null,holdW=best?best.weight:'?';
+  document.getElementById('p-material').textContent=mat;
+  document.getElementById('present-used').textContent=`${blockCount||'?'} blocks on our bridge`;
+  document.getElementById('present-hold').textContent=`${holdW} grams of weight`;
+  document.getElementById('present-predict').textContent=`${pred} grams, result was ${holdW} grams`;
+}
+
+// ============================================================
+// TOAST + CONFETTI
+// ============================================================
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function triggerConfetti(){
+  const canvas=document.getElementById('confetti-canvas'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const colors=['#FF6B6B','#4D96FF','#6BCB77','#FFD700','#FF9F43','#A29BFE'];
+  const pieces=Array.from({length:120},()=>({x:Math.random()*canvas.width,y:Math.random()*-canvas.height,r:Math.random()*8+4,color:colors[Math.floor(Math.random()*colors.length)],vy:Math.random()*4+2,vx:(Math.random()-.5)*3,rot:Math.random()*360,vr:(Math.random()-.5)*6}));
+  let frame=0;
+  (function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);pieces.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.rot+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.5);ctx.restore();});if(++frame<120)requestAnimationFrame(animate);else ctx.clearRect(0,0,canvas.width,canvas.height);})();
+}
+function celebrate(){triggerConfetti();showToast('🎉 Awesome work, Engineer!');}
+
+// ============================================================
+// HOLOGRAM — Phone Pyramid 4-View
+// ============================================================
+let holoAnimFrame=null;
+
+function showHologram(){
+  const overlay=document.getElementById('holo-overlay');
+  overlay.style.display='block';
+  renderHologram();
+  if(overlay.requestFullscreen) overlay.requestFullscreen().catch(()=>{});
+}
+function closeHologram(){
+  cancelAnimationFrame(holoAnimFrame);holoAnimFrame=null;
+  document.getElementById('holo-overlay').style.display='none';
+  document.getElementById('pyramid-guide').style.display='none';
+  if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+}
+function togglePyramidGuide(){
+  const g=document.getElementById('pyramid-guide');
+  g.style.display=g.style.display==='none'?'block':'none';
+}
+
+function renderHologram(){
+  cancelAnimationFrame(holoAnimFrame);holoAnimFrame=null;
+  const canvas=document.getElementById('holo-canvas'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
+
+  // -- Static background layer --
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+  // Grid background
+  ctx.strokeStyle='rgba(0,255,170,0.035)';ctx.lineWidth=1;
+  const gs=28;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Bridge view dimensions (aspect COLS:ROWS = 14:6)
+  const viewW=Math.min(W,H)*0.40;
+  const viewH=viewW*(ROWS/COLS);
+  const gap=Math.min(W,H)*0.055;
+
+  // Hologram color per material
+  const holoCol={popsicle:'#00FFB3',wood:'#00CCFF',steel:'#7799FF'};
+
+  // Draw the bridge in hologram style at local origin (0,0)
+  function drawHoloBridge(){
+    const cW=viewW/COLS,cH=viewH/ROWS;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const mat=grid[r][c];if(!mat)continue;
+      const col=holoCol[mat],x=c*cW+1,y=r*cH+1,bw=cW-2,bh=cH-2;
+      ctx.shadowBlur=10;ctx.shadowColor=col;
+      ctx.fillStyle=col+'22';ctx.fillRect(x,y,bw,bh);
+      ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.strokeRect(x,y,bw,bh);
+      ctx.strokeStyle=col+'66';ctx.lineWidth=.5;
+      ctx.beginPath();ctx.moveTo(x+2,y+2);ctx.lineTo(x+bw-2,y+2);ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    // Scanlines
+    ctx.fillStyle='rgba(0,0,0,0.16)';
+    for(let sy=0;sy<viewH;sy+=3)ctx.fillRect(0,sy,viewW,1.5);
+  }
+
+  // Helper: draw view at (centerX, centerY) with rotation
+  // After rotation, image (viewW × viewH) is centered at given point
+  function drawView(centerX,centerY,angle){
+    ctx.save();
+    ctx.translate(centerX,centerY);
+    ctx.rotate(angle);
+    ctx.translate(-viewW/2,-viewH/2);
+    drawHoloBridge();
+    ctx.restore();
+  }
+
+  // 4 views — each "base" (bottom row) faces the center
+  // TOP:    rotation  0    (bottom faces down → toward center)
+  // BOTTOM: rotation  π    (bottom faces up   → toward center)
+  // LEFT:   rotation -π/2  (bottom faces right → toward center)
+  // RIGHT:  rotation +π/2  (bottom faces left  → toward center)
+
+  drawView(cx,             cy - gap - viewH/2,  0);            // TOP
+  drawView(cx,             cy + gap + viewH/2,  Math.PI);      // BOTTOM
+  drawView(cx - gap - viewH/2, cy,             -Math.PI/2);    // LEFT
+  drawView(cx + gap + viewH/2, cy,              Math.PI/2);    // RIGHT
+
+  // Center glow
+  const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,gap*1.5);
+  grad.addColorStop(0,'rgba(0,220,180,0.22)');grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+
+  // Diamond pyramid-base guide
+  const dm=gap*.75;
+  ctx.strokeStyle='rgba(0,255,180,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(cx,cy-dm);ctx.lineTo(cx+dm,cy);ctx.lineTo(cx,cy+dm);ctx.lineTo(cx-dm,cy);ctx.closePath();ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Corner vignette
+  const vg=ctx.createRadialGradient(cx,cy,Math.min(W,H)*.3,cx,cy,Math.max(W,H)*.8);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.65)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+
+  // -- Animated scan sweep --
+  // Snapshot static frame BEFORE animation starts, so each frame restores clean state
+  const staticFrame=ctx.getImageData(0,0,W,H);
+  let scanY=0;
+  function sweep(){
+    if(document.getElementById('holo-overlay').style.display==='none')return;
+    // Restore static frame first (prevents green accumulation)
+    ctx.putImageData(staticFrame,0,0);
+    const sg=ctx.createLinearGradient(0,scanY-50,0,scanY+50);
+    sg.addColorStop(0,'rgba(0,255,180,0)');sg.addColorStop(.5,'rgba(0,255,180,0.18)');sg.addColorStop(1,'rgba(0,255,180,0)');
+    ctx.fillStyle=sg;ctx.fillRect(0,scanY-50,W,100);
+    scanY=(scanY+1.8)%H;
+    holoAnimFrame=requestAnimationFrame(sweep);
+  }
+  sweep();
+}
+
+// ============================================================
+// RESIZE
+// ============================================================
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    setupCanvas();drawGrid();
+    if(document.getElementById('screen2').classList.contains('active')){setupTestCanvas();drawTestGrid();}
+    if(document.getElementById('holo-overlay').style.display!=='none') renderHologram();
+  },200);
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load',()=>{
+  initGrid();
+  setTimeout(()=>{setupCanvas();selectMaterial('popsicle');updateQtyDisplay();},150);
+});
+</script>
+</body>
+</html>
